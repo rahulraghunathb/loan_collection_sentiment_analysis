@@ -104,9 +104,10 @@
   --shadow-glow-rose:   0 0 20px rgba(220, 38, 38, 0.15);
 
   /* ── Transitions ────────────────────────────── */
-  --transition-fast: 150ms ease;
-  --transition-base: 250ms ease;
-  --transition-slow: 400ms ease;
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 html {
@@ -337,16 +338,40 @@ body {
   background: linear-gradient(
     90deg,
     var(--surface-2) 25%,
-    rgba(250, 129, 18, 0.06) 50%,
+    rgba(250, 129, 18, 0.08) 50%,
     var(--surface-2) 75%
   );
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
+  background-size: 400% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
   border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
 }
 @keyframes shimmer {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0%   { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* ── Page-level spinner (full-page loading) ─── */
+.page-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 5rem 0;
+  gap: var(--space-4);
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+}
+.page-spinner .spinner-ring {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--border-medium);
+  border-top-color: var(--brand);
+  border-radius: 50%;
+  animation: spin-ring 0.75s linear infinite;
+}
+@keyframes spin-ring {
+  to { transform: rotate(360deg); }
 }
 
 /* ── KPI Cards ────────────────────────────────── */
@@ -389,6 +414,39 @@ body {
 .kpi-card.accent-rose::before    { background: var(--gradient-danger); }
 .kpi-card.accent-amber::before   { background: var(--gradient-warning); }
 .kpi-card.accent-blue::before    { background: var(--gradient-info); }
+
+.kpi-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-3);
+  transition: background var(--transition-fast), transform var(--transition-base);
+}
+.kpi-icon svg {
+  width: 16px;
+  height: 16px;
+  stroke: var(--text-muted);
+  transition: stroke var(--transition-fast);
+}
+.kpi-card:hover .kpi-icon {
+  background: rgba(250, 129, 18, 0.1);
+  transform: scale(1.1) rotate(-4deg);
+}
+.kpi-card:hover .kpi-icon svg {
+  stroke: var(--brand);
+}
+.kpi-card.accent-emerald:hover .kpi-icon { background: rgba(5, 150, 105, 0.1); }
+.kpi-card.accent-emerald:hover .kpi-icon svg { stroke: var(--accent-emerald); }
+.kpi-card.accent-rose:hover .kpi-icon { background: rgba(220, 38, 38, 0.1); }
+.kpi-card.accent-rose:hover .kpi-icon svg { stroke: var(--accent-rose); }
+.kpi-card.accent-amber:hover .kpi-icon { background: rgba(217, 119, 6, 0.1); }
+.kpi-card.accent-amber:hover .kpi-icon svg { stroke: var(--accent-amber); }
+.kpi-card.accent-blue:hover .kpi-icon { background: rgba(37, 99, 235, 0.1); }
+.kpi-card.accent-blue:hover .kpi-icon svg { stroke: var(--accent-indigo); }
 
 .kpi-label {
   font-size: var(--fs-xs);
@@ -435,12 +493,13 @@ body {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   padding: var(--space-6);
-  transition: all var(--transition-base);
+  transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
   box-shadow: var(--shadow-sm);
 }
 .card:hover {
   border-color: var(--border-medium);
   box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
 }
 .card-header {
   display: flex;
@@ -529,11 +588,14 @@ body {
   color: var(--text-primary);
 }
 .data-table tbody tr {
-  transition: background var(--transition-fast);
+  transition: background var(--transition-fast), transform var(--transition-fast);
   cursor: pointer;
 }
 .data-table tbody tr:hover {
   background: var(--bg-glass-hover);
+}
+.data-table tbody tr:active {
+  transform: scale(0.995);
 }
 
 /* ── Badges ───────────────────────────────────── */
@@ -883,7 +945,25 @@ body {
   font-size: var(--fs-sm);
   font-weight: 600;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast),
+              background var(--transition-fast), border-color var(--transition-fast),
+              color var(--transition-fast), opacity var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0);
+  transition: background var(--transition-fast);
+  border-radius: inherit;
+}
+.btn:active::after {
+  background: rgba(255,255,255,0.15);
+}
+.btn:active {
+  transform: scale(0.97) translateY(0) !important;
 }
 .btn-primary {
   background: var(--gradient-brand);
@@ -891,13 +971,14 @@ body {
   box-shadow: 0 2px 8px rgba(250, 129, 18, 0.3);
 }
 .btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(250, 129, 18, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(250, 129, 18, 0.45);
 }
 .btn-primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
+  box-shadow: none;
 }
 .btn-ghost {
   background: transparent;
@@ -908,6 +989,7 @@ body {
   background: var(--surface-2);
   color: var(--brand);
   border-color: var(--brand);
+  transform: translateY(-1px);
 }
 
 /* ── Tags / Key Points ────────────────────────── */
@@ -1486,7 +1568,7 @@ body {
   border: 2px solid var(--border-medium);
   border-top-color: var(--brand);
   border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+  animation: spin-ring 0.75s linear infinite;
   display: none;
 }
 
@@ -1531,10 +1613,6 @@ body {
 .pipeline-step.done .step-detail {
   color: var(--accent-emerald);
   font-weight: 500;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 
 /* ── Step 3 Success / Error ──────────────────────── */
@@ -1607,4 +1685,253 @@ body {
   .upload-fields-grid,
   .new-customer-grid { grid-template-columns: 1fr; }
   .result-summary-grid { grid-template-columns: 1fr 1fr; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Micro-animations & Motion
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Page content entry ──────────────────────── */
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+#page-content > * {
+  animation: fadeSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* ── KPI cards staggered entry ───────────────── */
+.kpi-grid .kpi-card:nth-child(1) { animation: fadeSlideUp 0.3s 0.05s both; }
+.kpi-grid .kpi-card:nth-child(2) { animation: fadeSlideUp 0.3s 0.10s both; }
+.kpi-grid .kpi-card:nth-child(3) { animation: fadeSlideUp 0.3s 0.15s both; }
+.kpi-grid .kpi-card:nth-child(4) { animation: fadeSlideUp 0.3s 0.20s both; }
+.kpi-grid .kpi-card:nth-child(5) { animation: fadeSlideUp 0.3s 0.25s both; }
+.kpi-grid .kpi-card:nth-child(6) { animation: fadeSlideUp 0.3s 0.30s both; }
+
+.kpi-value {
+  animation: countUp 0.4s 0.2s both;
+}
+
+/* ── Table row stagger ───────────────────────── */
+.data-table tbody tr {
+  animation: fadeIn 0.25s both;
+}
+.data-table tbody tr:nth-child(1)  { animation-delay: 0.04s; }
+.data-table tbody tr:nth-child(2)  { animation-delay: 0.07s; }
+.data-table tbody tr:nth-child(3)  { animation-delay: 0.10s; }
+.data-table tbody tr:nth-child(4)  { animation-delay: 0.13s; }
+.data-table tbody tr:nth-child(5)  { animation-delay: 0.16s; }
+.data-table tbody tr:nth-child(6)  { animation-delay: 0.19s; }
+.data-table tbody tr:nth-child(7)  { animation-delay: 0.22s; }
+.data-table tbody tr:nth-child(8)  { animation-delay: 0.25s; }
+.data-table tbody tr:nth-child(9)  { animation-delay: 0.28s; }
+.data-table tbody tr:nth-child(10) { animation-delay: 0.31s; }
+
+/* ── Gauge fill animation ────────────────────── */
+@keyframes gaugeGrow {
+  from { width: 0 !important; }
+}
+.gauge-fill {
+  animation: gaugeGrow 0.7s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+.risk-meter-fill {
+  animation: gaugeGrow 0.8s 0.15s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* ── Badge pop-in ────────────────────────────── */
+.badge {
+  animation: scaleIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+.badge:hover {
+  transform: scale(1.05);
+}
+
+/* ── Nav item hover ──────────────────────────── */
+.nav-item {
+  transition: background var(--transition-fast), color var(--transition-fast),
+              transform var(--transition-fast), padding-left var(--transition-fast);
+}
+.nav-item:hover {
+  transform: translateX(3px);
+}
+.nav-item.active {
+  transform: translateX(3px);
+}
+
+/* ── Filter chip press ───────────────────────── */
+.filter-chip {
+  transition: background var(--transition-fast), color var(--transition-fast),
+              border-color var(--transition-fast), transform var(--transition-fast),
+              box-shadow var(--transition-fast);
+}
+.filter-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(250, 129, 18, 0.15);
+}
+.filter-chip:active {
+  transform: scale(0.96);
+}
+
+/* ── Analysis card entry ─────────────────────── */
+.analysis-card {
+  animation: fadeSlideUp 0.3s both;
+  transition: transform var(--transition-base), box-shadow var(--transition-base),
+              border-color var(--transition-base);
+}
+.analysis-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.analysis-card:nth-child(1) { animation-delay: 0.05s; }
+.analysis-card:nth-child(2) { animation-delay: 0.10s; }
+.analysis-card:nth-child(3) { animation-delay: 0.15s; }
+.analysis-card:nth-child(4) { animation-delay: 0.20s; }
+.analysis-card:nth-child(5) { animation-delay: 0.25s; }
+
+/* ── Timeline item entry ─────────────────────── */
+.timeline-item {
+  animation: slideInRight 0.3s both;
+}
+.timeline-item:nth-child(1) { animation-delay: 0.05s; }
+.timeline-item:nth-child(2) { animation-delay: 0.10s; }
+.timeline-item:nth-child(3) { animation-delay: 0.15s; }
+.timeline-item:nth-child(4) { animation-delay: 0.20s; }
+.timeline-item:nth-child(5) { animation-delay: 0.25s; }
+.timeline-content {
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+.timeline-content:hover {
+  transform: translateX(4px);
+  box-shadow: var(--shadow-md);
+}
+
+/* ── Transcript message entry ────────────────── */
+.transcript-msg {
+  animation: fadeSlideUp 0.25s both;
+}
+.transcript-msg:nth-child(odd)  { animation-delay: 0.03s; }
+.transcript-msg:nth-child(even) { animation-delay: 0.06s; }
+
+/* ── Compliance alert entry ──────────────────── */
+.compliance-alert {
+  animation: fadeSlideUp 0.3s both;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+.compliance-alert:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+/* ── Modal entry ─────────────────────────────── */
+.modal-overlay:not(.hidden) {
+  animation: fadeIn 0.2s both;
+}
+.modal-content {
+  animation: scaleIn 0.25s cubic-bezier(0.34, 1.2, 0.64, 1) both;
+}
+
+/* ── Pipeline step transitions ───────────────── */
+.pipeline-step {
+  transition: background var(--transition-base), border-color var(--transition-base),
+              transform var(--transition-base);
+}
+.pipeline-step.active {
+  transform: scale(1.01);
+}
+.pipeline-step.done {
+  transform: scale(1);
+}
+
+/* ── Upload dropzone hover ───────────────────── */
+.upload-dropzone {
+  transition: border-color var(--transition-base), background var(--transition-base),
+              transform var(--transition-base), box-shadow var(--transition-base);
+}
+.upload-dropzone:hover {
+  transform: scale(1.005);
+  box-shadow: 0 4px 20px rgba(250, 129, 18, 0.1);
+}
+
+/* ── Step indicator transitions ──────────────── */
+.upload-step {
+  transition: background var(--transition-base), border-color var(--transition-base),
+              transform var(--transition-bounce), color var(--transition-base);
+}
+.upload-step.active {
+  transform: scale(1.15);
+}
+.upload-step.done {
+  transform: scale(1);
+  animation: stepDone 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes stepDone {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+/* ── Success/error icon bounce ───────────────── */
+.success-icon-wrap,
+.error-icon-wrap {
+  animation: scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ── Result stats pop ────────────────────────── */
+.result-stat {
+  animation: fadeSlideUp 0.3s both;
+}
+.result-stat:nth-child(1) { animation-delay: 0.1s; }
+.result-stat:nth-child(2) { animation-delay: 0.15s; }
+.result-stat:nth-child(3) { animation-delay: 0.2s; }
+.result-stat:nth-child(4) { animation-delay: 0.25s; }
+
+/* ── Customer row hover ──────────────────────── */
+.customer-header {
+  animation: fadeSlideUp 0.35s both;
+}
+
+/* ── Sidebar brand pulse on load ─────────────── */
+.brand-icon {
+  animation: fadeIn 0.5s 0.1s both;
+}
+.brand-name {
+  animation: fadeIn 0.5s 0.2s both;
+}
+
+/* ── Sidebar nav items stagger ───────────────── */
+.nav-item:nth-child(1) { animation: fadeSlideUp 0.3s 0.1s both; }
+.nav-item:nth-child(2) { animation: fadeSlideUp 0.3s 0.15s both; }
+.nav-item:nth-child(3) { animation: fadeSlideUp 0.3s 0.20s both; }
+.nav-item:nth-child(4) { animation: fadeSlideUp 0.3s 0.25s both; }
+
+/* ── Top bar entry ───────────────────────────── */
+.top-bar {
+  animation: fadeIn 0.4s 0.05s both;
+}
+
+/* ── Respect reduced motion ──────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

@@ -110,7 +110,11 @@ const App = {
 
     // ── Customers Page ──────────────────────────
     async renderCustomersPage(container) {
-        container.innerHTML = '<div class="loading-skeleton"><div class="skeleton-card"></div></div>'
+        container.innerHTML = `
+          <div class="loading-skeleton">
+            <div class="skeleton-card"></div><div class="skeleton-card"></div>
+            <div class="skeleton-card"></div><div class="skeleton-card"></div>
+          </div>`
         const res = await API.getCustomers()
         if (!res.success) {
             container.innerHTML = '<div class="empty-state"><h3>Failed to load customers</h3></div>'
@@ -140,7 +144,7 @@ const App = {
               <tr onclick="App.openCustomerTimeline('${c.id}')">
                 <td><strong>${c.name}</strong><div class="text-muted" style="font-size:0.7rem">${c.phone}</div></td>
                 <td><code style="font-size:0.75rem;color:var(--accent-indigo)">${c.loanId}</code></td>
-                <td><strong>₹${(c.outstandingAmount || 0).toLocaleString('en-IN')}</strong></td>
+                <td><strong>Rs. ${(c.outstandingAmount || 0).toLocaleString('en-IN')}</strong></td>
                 <td><span style="color:${c.daysPastDue > 90 ? 'var(--accent-rose)' : c.daysPastDue > 30 ? 'var(--accent-amber)' : 'var(--accent-emerald)'};font-weight:700">${c.daysPastDue}</span></td>
                 <td><span class="badge badge-${c.riskLevel === 'critical' ? 'danger' : c.riskLevel === 'high' ? 'danger' : c.riskLevel === 'medium' ? 'warning' : 'success'}">${c.riskLevel}</span></td>
                 <td>${c.totalCalls}</td>
@@ -150,7 +154,7 @@ const App = {
                     <span class="gauge-value" style="color:${DashboardView.intentColor(intentScore)}">${intentScore}</span>
                   </div>
                 </td>
-                <td>${c.latestCall?.outcome ? `<span class="badge ${DashboardView.outcomeBadgeClass(c.latestCall.outcome)}">${DashboardView.formatOutcome(c.latestCall.outcome)}</span>` : '—'}</td>
+                <td>${c.latestCall?.outcome ? `<span class="badge ${DashboardView.outcomeBadgeClass(c.latestCall.outcome)}">${DashboardView.formatOutcome(c.latestCall.outcome)}</span>` : '-'}</td>
               </tr>`
         }).join('')}
           </tbody>
@@ -161,7 +165,11 @@ const App = {
 
     // ── Compliance Page ─────────────────────────
     async renderCompliancePage(container) {
-        container.innerHTML = '<div class="loading-skeleton"><div class="skeleton-card"></div></div>'
+        container.innerHTML = `
+          <div class="loading-skeleton">
+            <div class="skeleton-card"></div><div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+          </div>`
         const res = await API.getCalls()
         if (!res.success) {
             container.innerHTML = '<div class="empty-state"><h3>Failed to load data</h3></div>'
@@ -176,16 +184,34 @@ const App = {
         container.innerHTML = `
       <div class="kpi-grid mb-6">
         <div class="kpi-card accent-rose">
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+          </div>
           <div class="kpi-label">Total Violations</div>
           <div class="kpi-value text-rose">${allFlags.length}</div>
           <div class="kpi-sub">${callsWithFlags.length} call${callsWithFlags.length !== 1 ? 's' : ''} flagged</div>
         </div>
         <div class="kpi-card accent-amber">
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+          </div>
           <div class="kpi-label">High Severity</div>
           <div class="kpi-value text-amber">${allFlags.filter(f => f.severity === 'high').length}</div>
           <div class="kpi-sub">Require immediate review</div>
         </div>
         <div class="kpi-card accent-emerald">
+          <div class="kpi-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              <polyline points="9 12 11 14 15 10"/>
+            </svg>
+          </div>
           <div class="kpi-label">Clean Calls</div>
           <div class="kpi-value text-emerald">${res.data.length - callsWithFlags.length}</div>
           <div class="kpi-sub">No violations detected</div>
@@ -204,7 +230,7 @@ const App = {
             </div>
             <div class="alert-evidence">"${f.evidence}"</div>
             <div class="text-muted" style="font-size:0.75rem;margin-top:0.75rem">
-              Agent: <strong>${f.agentName}</strong> · Customer: <strong>${f.customerName || '—'}</strong> · ${DashboardView.formatDate(f.callDate)} · <code>${f.callId}</code>
+              Agent: <strong>${f.agentName}</strong> | Customer: <strong>${f.customerName || '-'}</strong> | ${DashboardView.formatDate(f.callDate)} | <code>${f.callId}</code>
             </div>
           </div>
         `).join('')}

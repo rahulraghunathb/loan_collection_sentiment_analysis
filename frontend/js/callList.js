@@ -5,7 +5,12 @@ const CallListView = {
     currentFilter: 'all',
 
     async render(container) {
-        container.innerHTML = '<div class="loading-skeleton"><div class="skeleton-card"></div></div>'
+        container.innerHTML = `
+          <div class="loading-skeleton">
+            <div class="skeleton-card"></div><div class="skeleton-card"></div>
+            <div class="skeleton-card"></div><div class="skeleton-card"></div>
+            <div class="skeleton-card"></div><div class="skeleton-card"></div>
+          </div>`
 
         const res = await API.getCalls()
         if (!res.success) {
@@ -19,11 +24,11 @@ const CallListView = {
       <div class="flex-between mb-4">
         <div class="filters-bar" style="margin-bottom:0">
           <button class="filter-chip active" data-filter="all" onclick="CallListView.filter('all', this)">All Calls</button>
-          <button class="filter-chip" data-filter="payment_committed" onclick="CallListView.filter('payment_committed', this)">✅ Committed</button>
-          <button class="filter-chip" data-filter="partial_commitment" onclick="CallListView.filter('partial_commitment', this)">⚠️ Partial</button>
-          <button class="filter-chip" data-filter="no_commitment" onclick="CallListView.filter('no_commitment', this)">❌ No Commitment</button>
-          <button class="filter-chip" data-filter="dispute_raised" onclick="CallListView.filter('dispute_raised', this)">⚖️ Dispute</button>
-          <button class="filter-chip" data-filter="escalation_required" onclick="CallListView.filter('escalation_required', this)">🔺 Escalation</button>
+          <button class="filter-chip" data-filter="payment_committed" onclick="CallListView.filter('payment_committed', this)">Committed</button>
+          <button class="filter-chip" data-filter="partial_commitment" onclick="CallListView.filter('partial_commitment', this)">Partial</button>
+          <button class="filter-chip" data-filter="no_commitment" onclick="CallListView.filter('no_commitment', this)">No Commitment</button>
+          <button class="filter-chip" data-filter="dispute_raised" onclick="CallListView.filter('dispute_raised', this)">Dispute</button>
+          <button class="filter-chip" data-filter="escalation_required" onclick="CallListView.filter('escalation_required', this)">Escalation</button>
         </div>
         <button class="btn btn-primary" onclick="UploadCallModal.open()" style="white-space:nowrap;flex-shrink:0">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;margin-right:6px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
@@ -87,8 +92,8 @@ const CallListView = {
           </div>
         </td>
         <td><span class="badge ${DashboardView.outcomeBadgeClass(c.analysis?.outcome)}">${DashboardView.formatOutcome(c.analysis?.outcome)}</span></td>
-        <td><span style="color:${DashboardView.riskColor(c.analysis?.riskScore || 50)};font-weight:700">${c.analysis?.riskScore || '—'}</span></td>
-        <td>${ptp?.detected ? `<span class="badge badge-info">₹${this.formatAmount(ptp.amount)}</span>` : '<span class="text-muted">—</span>'}</td>
+        <td><span style="color:${DashboardView.riskColor(c.analysis?.riskScore || 50)};font-weight:700">${c.analysis?.riskScore || '-'}</span></td>
+        <td>${ptp?.detected ? `<span class="badge badge-info">Rs. ${this.formatAmount(ptp.amount)}</span>` : '<span class="text-muted">-</span>'}</td>
       </tr>`
         }).join('')
     },
@@ -105,14 +110,14 @@ const CallListView = {
     },
 
     formatDuration(seconds) {
-        if (!seconds) return '—'
+        if (!seconds) return '-'
         const m = Math.floor(seconds / 60)
         const s = seconds % 60
         return `${m}:${String(s).padStart(2, '0')}`
     },
 
     formatAmount(amt) {
-        if (!amt) return '—'
+        if (!amt) return '-'
         if (amt >= 100000) return (amt / 100000).toFixed(1) + 'L'
         if (amt >= 1000) return (amt / 1000).toFixed(0) + 'K'
         return amt.toString()

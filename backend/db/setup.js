@@ -44,7 +44,7 @@ db.initialize = async () => {
     // Safe sync: creates tables that don't exist, never modifies existing schema.
     // Use `npm run reseed` to wipe and rebuild from scratch during development.
     await sequelize.sync({ alter: false })
-    console.log('✅ Database synced')
+    console.log('Database synced')
 }
 
 module.exports = db

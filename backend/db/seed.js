@@ -517,17 +517,17 @@ async function seed() {
     // Check if data already exists
     const count = await db_instance.Customer.count()
     if (count > 0) {
-        console.log('⏭️  Database already seeded, skipping...')
+        console.log('Database already seeded, skipping...')
         return
     }
 
-    console.log('🌱 Seeding database with demo data...')
+    console.log('Seeding database with demo data...')
 
     // Create customers
     for (const cust of CUSTOMERS) {
         await db_instance.Customer.create(cust)
     }
-    console.log(`   ✅ Created ${CUSTOMERS.length} customers`)
+    console.log(`   Created ${CUSTOMERS.length} customers`)
 
     // Create calls, segments, and analysis results
     for (const cd of CALL_DATA) {
@@ -559,8 +559,8 @@ async function seed() {
             ...cd.analysis,
         })
     }
-    console.log(`   ✅ Created ${CALL_DATA.length} calls with transcripts and analysis`)
-    console.log('🎉 Seeding complete!')
+    console.log(`   Created ${CALL_DATA.length} calls with transcripts and analysis`)
+    console.log('Seeding complete!')
 }
 
 // Run if called directly

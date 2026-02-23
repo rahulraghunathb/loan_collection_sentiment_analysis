@@ -17,7 +17,10 @@ const CallDetailView = {
         const btn = document.getElementById('analyze-btn')
         const statusEl = document.getElementById('analyze-status')
 
-        if (btn) { btn.disabled = true; btn.textContent = 'Analyzing…' }
+        if (btn) {
+            btn.disabled = true
+            btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;animation:spin-ring 0.75s linear infinite"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Analyzing...`
+        }
         if (statusEl) statusEl.textContent = ''
 
         const res = await API.analyzeCall(callId, model)
@@ -31,7 +34,10 @@ const CallDetailView = {
             const container = document.getElementById('page-content')
             if (container) setTimeout(() => CallDetailView.render(container, callId), 800)
         } else {
-            if (btn) { btn.disabled = false; btn.textContent = 'Run Analysis' }
+            if (btn) {
+                btn.disabled = false
+                btn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><polygon points="5 3 19 12 5 21 5 3"/></svg> Run Analysis`
+            }
             if (statusEl) {
                 statusEl.style.color = 'var(--accent-rose)'
                 statusEl.textContent = res.error?.message || 'Analysis failed'
@@ -40,7 +46,11 @@ const CallDetailView = {
     },
 
     async render(container, callId) {
-        container.innerHTML = '<div class="loading-skeleton"><div class="skeleton-card"></div></div>'
+        container.innerHTML = `
+          <div class="loading-skeleton">
+            <div class="skeleton-card"></div><div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+          </div>`
 
         const [res, modelsData] = await Promise.all([
             API.getCall(callId),
@@ -66,7 +76,7 @@ const CallDetailView = {
         const analyzeLabel = hasAnalysis ? 'Re-analyze' : 'Run Analysis'
 
         const modelOptions = models.map(m =>
-            `<option value="${m.id}" ${m.id === defaultModel ? 'selected' : ''}>${m.label} — ${m.provider}</option>`
+            `<option value="${m.id}" ${m.id === defaultModel ? 'selected' : ''}>${m.label} - ${m.provider}</option>`
         ).join('')
 
         container.innerHTML = `
@@ -76,15 +86,21 @@ const CallDetailView = {
           <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.5rem">
             <code style="color:var(--accent-indigo);font-size:0.8rem">${call.id}</code>
             <span class="badge ${DashboardView.outcomeBadgeClass(a.outcome)}">${DashboardView.formatOutcome(a.outcome)}</span>
-            ${compliance.length ? `<span class="badge badge-danger">⚠ ${compliance.length} Compliance Flag${compliance.length > 1 ? 's' : ''}</span>` : ''}
+            ${compliance.length ? `<span class="badge badge-danger">${compliance.length} Compliance Flag${compliance.length > 1 ? 's' : ''}</span>` : ''}
           </div>
           <div class="text-muted" style="font-size:0.8rem">
-            ${call.customer?.name || 'Unknown Customer'} · Agent: ${call.agentName} · ${DashboardView.formatDate(call.callDate)} · ${CallListView.formatDuration(call.duration)}
+            ${call.customer?.name || 'Unknown Customer'} | Agent: ${call.agentName} | ${DashboardView.formatDate(call.callDate)} | ${CallListView.formatDuration(call.duration)}
           </div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem">
           <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap;justify-content:flex-end">
-            <button class="btn btn-ghost" onclick="App.openCustomerTimeline('${call.customerId}')">Customer Timeline</button>
+            <button class="btn btn-ghost" onclick="App.openCustomerTimeline('${call.customerId}')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>
+              </svg>
+              Customer Timeline
+            </button>
             ${models.length ? `
               <select id="model-select" style="
                 background:var(--surface-2);
@@ -100,6 +116,9 @@ const CallDetailView = {
               </select>
             ` : ''}
             <button id="analyze-btn" class="btn btn-primary" onclick="CallDetailView.triggerAnalysis('${call.id}')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
               ${analyzeLabel}
             </button>
           </div>
@@ -109,7 +128,12 @@ const CallDetailView = {
 
       <!-- Summary Card -->
       <div class="card mb-6" style="border-left:3px solid var(--accent-indigo)">
-        <div class="card-title" style="margin-bottom:0.75rem">AI Summary</div>
+        <div class="card-title" style="margin-bottom:0.75rem;display:flex;align-items:center;gap:0.5rem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;opacity:0.6">
+            <path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M12 16v-4"/><path d="M12 8h.01"/>
+          </svg>
+          AI Summary
+        </div>
         <p style="font-size:0.875rem;line-height:1.7;color:var(--text-secondary)">${a.summary || 'No summary available'}</p>
         ${(a.keyPoints && a.keyPoints.length) ? `
           <div class="tag-list mt-4">
@@ -123,7 +147,12 @@ const CallDetailView = {
         <!-- Transcript -->
         <div class="card">
           <div class="card-header">
-            <div class="card-title">Transcript</div>
+            <div class="card-title" style="display:flex;align-items:center;gap:0.5rem">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;opacity:0.6">
+                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+              </svg>
+              Transcript
+            </div>
             <span class="text-muted" style="font-size:0.75rem">${segments.length} segments</span>
           </div>
           <div class="transcript-panel">
@@ -132,7 +161,7 @@ const CallDetailView = {
                 <div class="transcript-avatar ${seg.speaker}">${seg.speaker === 'agent' ? 'A' : 'C'}</div>
                 <div>
                   <div class="transcript-bubble">${seg.text}</div>
-                  <div class="transcript-time">${this.formatTime(seg.startTime)} — ${this.formatTime(seg.endTime)}</div>
+                  <div class="transcript-time">${this.formatTime(seg.startTime)} - ${this.formatTime(seg.endTime)}</div>
                 </div>
               </div>
             `).join('')}
@@ -161,8 +190,8 @@ const CallDetailView = {
             <div class="analysis-card-title"><span class="dot" style="background:${ptp.detected ? 'var(--accent-emerald)' : 'var(--text-muted)'}"></span> Promise to Pay</div>
             ${ptp.detected ? `
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;font-size:0.8rem">
-                <div><div class="text-muted" style="font-size:0.65rem;text-transform:uppercase">Amount</div><strong style="font-size:1.1rem">₹${(ptp.amount || 0).toLocaleString('en-IN')}</strong></div>
-                <div><div class="text-muted" style="font-size:0.65rem;text-transform:uppercase">Date</div><strong>${ptp.date || '—'}</strong></div>
+                <div><div class="text-muted" style="font-size:0.65rem;text-transform:uppercase">Amount</div><strong style="font-size:1.1rem">Rs. ${(ptp.amount || 0).toLocaleString('en-IN')}</strong></div>
+                <div><div class="text-muted" style="font-size:0.65rem;text-transform:uppercase">Date</div><strong>${ptp.date || '-'}</strong></div>
                 <div><div class="text-muted" style="font-size:0.65rem;text-transform:uppercase">Confidence</div><strong style="color:${DashboardView.intentColor(ptp.confidence || 0)}">${ptp.confidence || 0}%</strong></div>
                 <div><div class="text-muted" style="font-size:0.65rem;text-transform:uppercase">Installment</div><strong>${ptp.installment ? 'Yes' : 'One-time'}</strong></div>
               </div>
@@ -181,7 +210,7 @@ const CallDetailView = {
                 </div>
                 <div class="alert-evidence">"${f.evidence}"</div>
               </div>
-            `).join('') : '<p class="text-muted" style="font-size:0.8rem">✅ No compliance violations detected</p>'}
+            `).join('') : '<p class="text-muted" style="font-size:0.8rem">No compliance violations detected</p>'}
           </div>
 
           <!-- Cross-Call Flags -->
@@ -193,7 +222,7 @@ const CallDetailView = {
                   <div class="flag-field">${f.field.replace(/_/g, ' ')}</div>
                   <div class="flag-comparison">
                     <div class="flag-claim">${f.previousClaim}</div>
-                    <div class="flag-arrow">→</div>
+                    <div class="flag-arrow">&rarr;</div>
                     <div class="flag-claim">${f.currentClaim}</div>
                   </div>
                 </div>
@@ -206,7 +235,7 @@ const CallDetailView = {
             <div class="analysis-card">
               <div class="analysis-card-title"><span class="dot" style="background:var(--accent-blue)"></span> Next Actions</div>
               <ul style="list-style:none;padding:0;margin:0">
-                ${a.nextActions.map(n => `<li style="padding:0.35rem 0;font-size:0.8rem;color:var(--text-secondary);border-bottom:1px solid var(--border-subtle)">→ ${n}</li>`).join('')}
+                ${a.nextActions.map(n => `<li style="padding:0.35rem 0;font-size:0.8rem;color:var(--text-secondary);border-bottom:1px solid var(--border-subtle)">&rarr; ${n}</li>`).join('')}
               </ul>
             </div>
           ` : ''}
@@ -226,7 +255,7 @@ const CallDetailView = {
     },
 
     formatTime(seconds) {
-        if (seconds == null) return '—'
+        if (seconds == null) return '-'
         const m = Math.floor(seconds / 60)
         const s = Math.floor(seconds % 60)
         return `${m}:${String(s).padStart(2, '0')}`

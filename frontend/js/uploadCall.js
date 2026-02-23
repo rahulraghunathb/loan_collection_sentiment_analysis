@@ -29,7 +29,7 @@ const UploadCallModal = {
 
     _renderStep1(models) {
         const customerOptions = this._customers.map(c =>
-            `<option value="${c.id}">${c.name} — ${c.loanId} (${c.riskLevel})</option>`
+            `<option value="${c.id}">${c.name} - ${c.loanId} (${c.riskLevel})</option>`
         ).join('')
 
         const modelOptions = models.map(m =>
@@ -64,11 +64,11 @@ const UploadCallModal = {
         <strong>Drop audio file here</strong>
         <span>or <button type="button" class="link-btn" id="browse-btn">browse</button></span>
       </div>
-      <div class="dropzone-hint">MP3, WAV, M4A, OGG, WEBM · max 100 MB</div>
+      <div class="dropzone-hint">MP3, WAV, M4A, OGG, WEBM | max 100 MB</div>
       <div class="dropzone-file-info hidden" id="file-info">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;color:var(--brand)"><path d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2z"/></svg>
         <span id="file-name-display"></span>
-        <button type="button" class="remove-file-btn" id="remove-file-btn" title="Remove">✕</button>
+        <button type="button" class="remove-file-btn" id="remove-file-btn" title="Remove">&times;</button>
       </div>
     </div>
     <div class="field-error hidden" id="file-error">Please select an audio file.</div>
@@ -107,7 +107,7 @@ const UploadCallModal = {
       <div class="field-group">
         <label class="field-label" for="customer-select">Customer <span class="required">*</span></label>
         <select id="customer-select" class="field-input">
-          <option value="">— Select a customer —</option>
+          <option value="">Select a customer</option>
           ${customerOptions}
         </select>
         <div class="field-error hidden" id="customer-select-error">Please select a customer.</div>
@@ -328,9 +328,9 @@ const UploadCallModal = {
         modalBody.innerHTML = this._renderStep2()
 
         const steps = [
-            { id: 'step-upload', label: 'Uploading audio file…' },
-            { id: 'step-transcribe', label: 'Transcribing with Whisper…' },
-            { id: 'step-analyze', label: 'Running AI analysis pipeline…' },
+            { id: 'step-upload', label: 'Uploading audio file...' },
+            { id: 'step-transcribe', label: 'Transcribing with Whisper...' },
+            { id: 'step-analyze', label: 'Running AI analysis pipeline...' },
         ]
 
         const setStepState = (stepId, state, detail = '') => {
@@ -383,14 +383,14 @@ const UploadCallModal = {
 <div class="upload-modal">
   <div class="upload-modal-header">
     <div class="upload-step-indicator">
-      <span class="upload-step done" data-step="1">✓</span>
+      <span class="upload-step done" data-step="1">1</span>
       <span class="upload-step-line active"></span>
       <span class="upload-step active" data-step="2">2</span>
       <span class="upload-step-line"></span>
       <span class="upload-step" data-step="3">3</span>
     </div>
     <h2 class="upload-modal-title">Processing Pipeline</h2>
-    <p class="upload-modal-sub">Running live transcription and AI analysis — this may take a minute.</p>
+    <p class="upload-modal-sub">Running live transcription and AI analysis.</p>
   </div>
 
   <div class="pipeline-steps">
@@ -401,7 +401,7 @@ const UploadCallModal = {
       </div>
       <div class="step-content">
         <div class="step-label">Upload Audio</div>
-        <div class="step-detail">Waiting…</div>
+        <div class="step-detail">Waiting...</div>
       </div>
     </div>
 
@@ -412,7 +412,7 @@ const UploadCallModal = {
       </div>
       <div class="step-content">
         <div class="step-label">Transcribe with Whisper</div>
-        <div class="step-detail">Waiting…</div>
+        <div class="step-detail">Waiting...</div>
       </div>
     </div>
 
@@ -423,7 +423,7 @@ const UploadCallModal = {
       </div>
       <div class="step-content">
         <div class="step-label">AI Analysis Pipeline</div>
-        <div class="step-detail">Waiting…</div>
+        <div class="step-detail">Waiting...</div>
       </div>
     </div>
   </div>
@@ -436,19 +436,19 @@ const UploadCallModal = {
         const modalBody = document.getElementById('modal-body')
         if (!modalBody) return
 
-        const outcome = analysisData?.outcome || analysisData?.analysis?.outcome || '—'
-        const riskScore = analysisData?.riskScore ?? analysisData?.analysis?.riskScore ?? '—'
-        const intentScore = analysisData?.repaymentIntent?.score ?? analysisData?.analysis?.repaymentIntent?.score ?? '—'
+        const outcome = analysisData?.outcome || analysisData?.analysis?.outcome || '-'
+        const riskScore = analysisData?.riskScore ?? analysisData?.analysis?.riskScore ?? '-'
+        const intentScore = analysisData?.repaymentIntent?.score ?? analysisData?.analysis?.repaymentIntent?.score ?? '-'
 
         modalBody.innerHTML = `
 <div class="upload-modal">
   <div class="upload-modal-header">
     <div class="upload-step-indicator">
-      <span class="upload-step done" data-step="1">✓</span>
+      <span class="upload-step done" data-step="1">1</span>
       <span class="upload-step-line active"></span>
-      <span class="upload-step done" data-step="2">✓</span>
+      <span class="upload-step done" data-step="2">2</span>
       <span class="upload-step-line active"></span>
-      <span class="upload-step done" data-step="3">✓</span>
+      <span class="upload-step done" data-step="3">3</span>
     </div>
     <div class="success-icon-wrap">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
@@ -468,18 +468,18 @@ const UploadCallModal = {
     </div>
     <div class="result-stat">
       <div class="result-stat-label">Intent Score</div>
-      <div class="result-stat-value">${intentScore !== '—' ? intentScore + '/100' : '—'}</div>
+      <div class="result-stat-value">${intentScore !== '-' ? intentScore + '/100' : '-'}</div>
     </div>
     <div class="result-stat">
       <div class="result-stat-label">Risk Score</div>
-      <div class="result-stat-value">${riskScore !== '—' ? riskScore + '/100' : '—'}</div>
+      <div class="result-stat-value">${riskScore !== '-' ? riskScore + '/100' : '-'}</div>
     </div>
   </div>
 
   <div class="upload-modal-footer" style="justify-content:center;gap:1rem">
     <button class="btn btn-ghost" onclick="App.closeModal()">Close</button>
     <button class="btn btn-primary" onclick="App.closeModal(); App.openCallDetail('${callId}')">
-      View Full Analysis →
+      View Full Analysis
     </button>
   </div>
 </div>`
@@ -498,7 +498,7 @@ const UploadCallModal = {
     <h2 class="upload-modal-title">Pipeline Failed</h2>
     <p class="upload-modal-sub" style="color:var(--accent-rose)">${message}</p>
   </div>
-  ${callId ? `<p style="text-align:center;font-size:0.8rem;color:var(--text-muted);margin-bottom:1.5rem">Call record created: <code>${callId}</code> — you can retry transcription from the call detail page.</p>` : ''}
+  ${callId ? `<p style="text-align:center;font-size:0.8rem;color:var(--text-muted);margin-bottom:1.5rem">Call record created: <code>${callId}</code>.</p>` : ''}
   <div class="upload-modal-footer" style="justify-content:center;gap:1rem">
     <button class="btn btn-ghost" onclick="App.closeModal()">Close</button>
     <button class="btn btn-primary" onclick="UploadCallModal.open()">Try Again</button>
@@ -514,6 +514,6 @@ const UploadCallModal = {
             dispute_raised: 'Dispute Raised',
             escalation_required: 'Escalation Required',
         }
-        return map[outcome] || outcome?.replace(/_/g, ' ') || '—'
+        return map[outcome] || outcome?.replace(/_/g, ' ') || '-'
     },
 }
