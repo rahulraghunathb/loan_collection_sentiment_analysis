@@ -322,16 +322,13 @@ const UploadCallModal = {
     // ── Step 2: Processing ────────────────────────────────────────────────────
 
     async _runPipeline({ agentName, customerId, model }) {
-        const modalBody = document.getElementById('modal-body')
-        if (!modalBody) return
+        // Lock the router so hash changes don't re-render the page mid-pipeline
+        App.lockForPipeline()
+        // Close the form modal and open the dedicated non-dismissible pipeline overlay
+        App.closeModal()
+        this._openPipelineOverlay(this._renderStep2())
 
-        modalBody.innerHTML = this._renderStep2()
-
-        const steps = [
-            { id: 'step-upload', label: 'Uploading audio file...' },
-            { id: 'step-transcribe', label: 'Transcribing with Whisper...' },
-            { id: 'step-analyze', label: 'Running AI analysis pipeline...' },
-        ]
+        const wait = ms => new Promise(r => setTimeout(r, ms))
 
         const setStepState = (stepId, state, detail = '') => {
             const el = document.getElementById(stepId)
@@ -344,38 +341,77 @@ const UploadCallModal = {
         let callId = null
 
         try {
-            // Step 1: Upload
+            // Single request: upload + Whisper STT + LLM diarization + AI analysis
             setStepState('step-upload', 'active')
+
             const formData = new FormData()
             formData.append('audio', this._selectedFile)
             formData.append('customerId', customerId)
             formData.append('agentName', agentName)
+            if (model) formData.append('model', model)
 
-            const uploadRes = await API.uploadCall(formData)
-            if (!uploadRes.success) throw new Error(uploadRes.error || 'Upload failed')
-            callId = uploadRes.data.id
+            // Advance step indicators while the server processes sequentially.
+            // Upload is near-instant; transcription takes ~5-15s; analysis ~20-40s.
+            const stepTimer  = setTimeout(() => setStepState('step-transcribe', 'active'), 2500)
+            const stepTimer2 = setTimeout(() => setStepState('step-analyze',    'active'), 10000)
+
+            const res = await API.uploadAndAnalyze(formData)
+
+            clearTimeout(stepTimer)
+            clearTimeout(stepTimer2)
+
+            if (!res.success) throw new Error(res.error || 'Pipeline failed')
+
+            callId = res.data.callId
+            const segCount = res.data.segmentCount ?? '?'
+            const outcome  = res.data.analysis?.outcome || 'complete'
+
+            // Tick each step green one by one with a short pause so the user
+            // sees each green tick appear sequentially
             setStepState('step-upload', 'done', `Call ID: ${callId}`)
-
-            // Step 2: Transcribe
-            setStepState('step-transcribe', 'active')
-            const transcribeRes = await API.transcribeCall(callId)
-            if (!transcribeRes.success) throw new Error(transcribeRes.error || 'Transcription failed')
-            const segCount = transcribeRes.data?.segmentCount ?? '?'
-            setStepState('step-transcribe', 'done', `${segCount} segments extracted`)
-
-            // Step 3: Analyze
-            setStepState('step-analyze', 'active')
-            const analyzeRes = await API.analyzeCall(callId, model)
-            if (!analyzeRes.success) throw new Error(analyzeRes.error || 'Analysis failed')
-            const outcome = analyzeRes.data?.outcome || analyzeRes.data?.analysis?.outcome || 'complete'
+            await wait(450)
+            setStepState('step-transcribe', 'done', `${segCount} speaker-labelled segments`)
+            await wait(450)
             setStepState('step-analyze', 'done', `Outcome: ${this._formatOutcome(outcome)}`)
+            await wait(700)
 
-            // Step 3: Show success
-            this._showStep3(callId, analyzeRes.data)
+            // Close pipeline overlay and show results in the regular modal
+            this._closePipelineOverlay()
+            App.unlockForPipeline()
+            this._showStep3(callId, res.data.analysis)
 
         } catch (err) {
+            this._closePipelineOverlay()
+            App.unlockForPipeline()
             this._showError(err.message, callId)
         }
+    },
+
+    _openPipelineOverlay(html) {
+        let overlay = document.getElementById('pipeline-overlay')
+
+        // Create the overlay dynamically if it wasn't in the HTML (e.g. cached page)
+        if (!overlay) {
+            overlay = document.createElement('div')
+            overlay.id = 'pipeline-overlay'
+            overlay.className = 'modal-overlay'
+
+            const content = document.createElement('div')
+            content.id = 'pipeline-content'
+            content.className = 'modal-content'
+
+            overlay.appendChild(content)
+            document.body.appendChild(overlay)
+        }
+
+        const content = document.getElementById('pipeline-content')
+        if (content) content.innerHTML = html
+        overlay.classList.remove('hidden')
+    },
+
+    _closePipelineOverlay() {
+        const overlay = document.getElementById('pipeline-overlay')
+        if (overlay) overlay.classList.add('hidden')
     },
 
     _renderStep2() {
@@ -390,18 +426,18 @@ const UploadCallModal = {
       <span class="upload-step" data-step="3">3</span>
     </div>
     <h2 class="upload-modal-title">Processing Pipeline</h2>
-    <p class="upload-modal-sub">Running live transcription and AI analysis.</p>
+    <p class="upload-modal-sub">Uploading, transcribing, and running AI analysis.</p>
   </div>
 
   <div class="pipeline-steps">
-    <div class="pipeline-step pending" id="step-upload">
+    <div class="pipeline-step active" id="step-upload">
       <div class="step-icon">
         <span class="step-spinner"></span>
         <svg class="step-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
       <div class="step-content">
         <div class="step-label">Upload Audio</div>
-        <div class="step-detail">Waiting...</div>
+        <div class="step-detail">Sending file to server...</div>
       </div>
     </div>
 
@@ -411,8 +447,8 @@ const UploadCallModal = {
         <svg class="step-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
       </div>
       <div class="step-content">
-        <div class="step-label">Transcribe with Whisper</div>
-        <div class="step-detail">Waiting...</div>
+        <div class="step-label">Whisper STT + Speaker Diarization</div>
+        <div class="step-detail">Transcribing and labelling speakers...</div>
       </div>
     </div>
 
@@ -423,7 +459,7 @@ const UploadCallModal = {
       </div>
       <div class="step-content">
         <div class="step-label">AI Analysis Pipeline</div>
-        <div class="step-detail">Waiting...</div>
+        <div class="step-detail">Intent, compliance, PTP, summary...</div>
       </div>
     </div>
   </div>
@@ -433,14 +469,15 @@ const UploadCallModal = {
     // ── Step 3: Done ──────────────────────────────────────────────────────────
 
     _showStep3(callId, analysisData) {
-        const modalBody = document.getElementById('modal-body')
-        if (!modalBody) return
+        const outcome = analysisData?.outcome || '-'
+        const riskScore = analysisData?.riskScore ?? '-'
+        const intentScore = analysisData?.repaymentIntent?.score ?? '-'
+        const summary = analysisData?.summary || ''
+        const ptpDetected = analysisData?.promiseToPay?.detected
+        const ptpAmount = analysisData?.promiseToPay?.amount
+        const complianceCount = analysisData?.complianceFlags?.length ?? 0
 
-        const outcome = analysisData?.outcome || analysisData?.analysis?.outcome || '-'
-        const riskScore = analysisData?.riskScore ?? analysisData?.analysis?.riskScore ?? '-'
-        const intentScore = analysisData?.repaymentIntent?.score ?? analysisData?.analysis?.repaymentIntent?.score ?? '-'
-
-        modalBody.innerHTML = `
+        App.openModal(`
 <div class="upload-modal">
   <div class="upload-modal-header">
     <div class="upload-step-indicator">
@@ -454,7 +491,7 @@ const UploadCallModal = {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
     </div>
     <h2 class="upload-modal-title">Analysis Complete</h2>
-    <p class="upload-modal-sub">The call has been transcribed and fully analyzed.</p>
+    <p class="upload-modal-sub">Transcribed, speaker-labelled, and fully analyzed.</p>
   </div>
 
   <div class="result-summary-grid">
@@ -474,22 +511,32 @@ const UploadCallModal = {
       <div class="result-stat-label">Risk Score</div>
       <div class="result-stat-value">${riskScore !== '-' ? riskScore + '/100' : '-'}</div>
     </div>
+    <div class="result-stat">
+      <div class="result-stat-label">Promise to Pay</div>
+      <div class="result-stat-value">${ptpDetected ? (ptpAmount ? 'Rs. ' + Number(ptpAmount).toLocaleString('en-IN') : 'Detected') : 'None'}</div>
+    </div>
+    <div class="result-stat">
+      <div class="result-stat-label">Compliance Flags</div>
+      <div class="result-stat-value" style="color:${complianceCount > 0 ? 'var(--accent-rose)' : 'var(--accent-emerald)'}">${complianceCount > 0 ? complianceCount + ' flag' + (complianceCount > 1 ? 's' : '') : 'Clean'}</div>
+    </div>
   </div>
+
+  ${summary ? `<p style="font-size:0.8rem;color:var(--text-secondary);line-height:1.6;margin:0 0 1.5rem;padding:0.75rem 1rem;background:var(--surface-2);border-radius:var(--radius-md);border-left:3px solid var(--accent-indigo)">${summary}</p>` : ''}
 
   <div class="upload-modal-footer" style="justify-content:center;gap:1rem">
     <button class="btn btn-ghost" onclick="App.closeModal()">Close</button>
     <button class="btn btn-primary" onclick="App.closeModal(); App.openCallDetail('${callId}')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px">
+        <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+      </svg>
       View Full Analysis
     </button>
   </div>
-</div>`
+</div>`)
     },
 
     _showError(message, callId) {
-        const modalBody = document.getElementById('modal-body')
-        if (!modalBody) return
-
-        modalBody.innerHTML = `
+        App.openModal(`
 <div class="upload-modal">
   <div class="upload-modal-header">
     <div class="error-icon-wrap">
@@ -503,7 +550,7 @@ const UploadCallModal = {
     <button class="btn btn-ghost" onclick="App.closeModal()">Close</button>
     <button class="btn btn-primary" onclick="UploadCallModal.open()">Try Again</button>
   </div>
-</div>`
+</div>`)
     },
 
     _formatOutcome(outcome) {

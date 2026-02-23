@@ -4,13 +4,21 @@
 const App = {
     currentPage: 'dashboard',
 
+    _pipelineLocked: false,
+
     init() {
         this.bindNavigation()
         this.bindSidebar()
         this.bindModal()
         this.handleRoute()
-        window.addEventListener('hashchange', () => this.handleRoute())
+        window.addEventListener('hashchange', () => {
+            if (this._pipelineLocked) return
+            this.handleRoute()
+        })
     },
+
+    lockForPipeline()   { this._pipelineLocked = true  },
+    unlockForPipeline() { this._pipelineLocked = false },
 
     bindNavigation() {
         document.querySelectorAll('.nav-item').forEach(item => {

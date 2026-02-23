@@ -138,9 +138,12 @@ const transcribeCall = asyncHandler(async (req, res) => {
         ? require('path').join(config.UPLOAD_DIR, require('path').basename(call.audioUrl))
         : null
 
+    const { DEFAULT_MODEL } = require('../../../services/openRouterClient')
+    const diarizationModel = req.body?.model || DEFAULT_MODEL
+
     let segments
     try {
-        segments = await sttService.transcribe(audioPath)
+        segments = await sttService.transcribe(audioPath, diarizationModel)
     } catch (err) {
         log.error('STT transcription error', { callId: call.id, message: err.message })
         throw new AppError('INTERNAL_ERROR', err.message)
@@ -164,6 +167,100 @@ const transcribeCall = asyncHandler(async (req, res) => {
     log.info('Call transcribed', { callId: call.id, segmentCount: segments.length })
 
     res.json({ success: true, message: `Transcribed ${segments.length} segments`, data: { callId: call.id, segmentCount: segments.length } })
+})
+
+/**
+ * POST /api/v1/calls/upload-and-analyze
+ * Single-shot endpoint: upload audio → transcribe (Whisper + LLM diarization)
+ * → full AI analysis pipeline. Returns the completed analysis result.
+ *
+ * Multipart body:
+ *   audio        — audio file
+ *   customerId   — existing customer ID
+ *   agentName    — agent display name
+ *   model        — (optional) OpenRouter model ID
+ */
+const uploadAndAnalyze = asyncHandler(async (req, res) => {
+    const log = logger.withRequest(req.requestId)
+    const { customerId, agentName, model: requestedModel } = req.body
+
+    const customer = await db.Customer.findByPk(customerId)
+    if (!customer) throw new AppError('CUSTOMER_NOT_FOUND', `id=${customerId}`)
+
+    const callId = `CALL-${uuidv4().slice(0, 8).toUpperCase()}`
+    const audioUrl = req.file ? `/uploads/${req.file.filename}` : null
+
+    if (!req.file) throw new AppError('BAD_REQUEST', 'Audio file is required')
+
+    const call = await db.Call.create({
+        id: callId,
+        customerId,
+        audioUrl,
+        agentName: agentName || 'Unknown Agent',
+        callDate: new Date(),
+        status: 'pending',
+        duration: 0,
+    })
+    log.info('Call uploaded', { callId, customerId })
+
+    // ── Transcribe ──────────────────────────────────────────────────────────
+    const sttService = require('../../../services/sttService')
+    const { AVAILABLE_MODELS, DEFAULT_MODEL } = require('../../../services/openRouterClient')
+
+    const model = (requestedModel && AVAILABLE_MODELS.some(m => m.id === requestedModel))
+        ? requestedModel
+        : DEFAULT_MODEL
+
+    const audioPath = require('path').join(config.UPLOAD_DIR, require('path').basename(audioUrl))
+
+    let segments
+    try {
+        // Pass the selected model so diarization uses the same LLM
+        segments = await sttService.transcribe(audioPath, model)
+    } catch (err) {
+        log.error('STT error during upload-and-analyze', { callId, message: err.message })
+        throw new AppError('INTERNAL_ERROR', `Transcription failed: ${err.message}`)
+    }
+
+    await db.TranscriptSegment.destroy({ where: { callId } })
+    for (let i = 0; i < segments.length; i++) {
+        const seg = segments[i]
+        await db.TranscriptSegment.create({
+            id: `${callId}-SEG-${String(i + 1).padStart(3, '0')}`,
+            callId,
+            speaker: seg.speaker,
+            startTime: seg.startTime ?? 0,
+            endTime: seg.endTime ?? 0,
+            text: seg.text,
+        })
+    }
+    await call.update({ status: 'transcribed' })
+    log.info('Transcription complete', { callId, segmentCount: segments.length })
+
+    // ── Analyze ─────────────────────────────────────────────────────────────
+    const callWithSegments = await db.Call.findByPk(callId, {
+        include: [{ model: db.TranscriptSegment, as: 'segments', order: [['startTime', 'ASC']] }],
+    })
+
+    const pipeline = require('../../../ai/pipeline')
+    let result
+    try {
+        result = await pipeline.analyze(callWithSegments, { model })
+    } catch (err) {
+        log.error('AI pipeline error during upload-and-analyze', { callId, message: err.message })
+        throw new AppError('ANALYSIS_FAILED', `Analysis failed: ${err.message}`)
+    }
+
+    log.info('Upload-and-analyze complete', { callId, outcome: result.outcome, riskScore: result.riskScore, model })
+    res.status(201).json({
+        success: true,
+        data: {
+            callId,
+            segmentCount: segments.length,
+            analysis: result,
+        },
+        meta: { model },
+    })
 })
 
 /**
@@ -214,4 +311,4 @@ const analyzeCall = asyncHandler(async (req, res) => {
     res.json({ success: true, data: result, meta: { model } })
 })
 
-module.exports = { listCalls, getCall, uploadCall, transcribeCall, analyzeCall, upload }
+module.exports = { listCalls, getCall, uploadCall, uploadAndAnalyze, transcribeCall, analyzeCall, upload }

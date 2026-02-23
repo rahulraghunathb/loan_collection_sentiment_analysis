@@ -11,9 +11,12 @@
 const API = {
     BASE: (() => {
         const expressPort = 3000
-        const { hostname, port } = window.location
-        const isExpressOrigin = !port || port === String(expressPort)
-        return isExpressOrigin ? '/api' : `http://${hostname}:${expressPort}/api`
+        const { protocol, hostname, port } = window.location
+        // file:// protocol or any non-Express origin → always use absolute URL
+        if (protocol === 'file:' || (port && port !== String(expressPort))) {
+            return `http://localhost:${expressPort}/api`
+        }
+        return '/api'
     })(),
 
     async get(endpoint) {
@@ -65,8 +68,12 @@ const API = {
                 method: 'POST',
                 body: formData,
             })
-            if (!res.ok) throw new Error(`HTTP ${res.status}`)
-            return await res.json()
+            const json = await res.json()
+            if (!res.ok) {
+                const msg = json?.error?.detail || json?.error?.message || json?.message || `HTTP ${res.status}`
+                throw new Error(msg)
+            }
+            return json
         } catch (err) {
             console.error(`API UPLOAD ${endpoint}:`, err)
             return { success: false, error: err.message }
@@ -74,6 +81,9 @@ const API = {
     },
 
     uploadCall(formData) { return this.upload('/calls/upload', formData) },
+
+    // Upload + transcribe + analyze in a single request
+    uploadAndAnalyze(formData) { return this.upload('/calls/upload-and-analyze', formData) },
 
     // Customers
     getCustomers(params = {}) {
@@ -88,7 +98,7 @@ const API = {
 
     // Health / runtime config
     getHealth() {
-        const base = this.BASE.replace('/api', '')
+        const base = this.BASE.replace(/\/api$/, '')
         return fetch(`${base}/health/ready`).then(r => r.json()).catch(() => null)
     },
 }

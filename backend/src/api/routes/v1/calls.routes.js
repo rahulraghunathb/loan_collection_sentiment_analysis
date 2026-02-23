@@ -21,6 +21,17 @@ router.post(
     ctrl.uploadCall
 )
 
+// POST /api/v1/calls/upload-and-analyze
+// Single-shot: upload audio + transcribe (Whisper + LLM diarization) + full AI analysis
+router.post(
+    '/upload-and-analyze',
+    uploadLimiter,
+    ctrl.upload.single('audio'),
+    uploadCallValidator,
+    validate,
+    ctrl.uploadAndAnalyze
+)
+
 // POST /api/v1/calls/:id/transcribe
 router.post('/:id/transcribe', getCallValidator, validate, ctrl.transcribeCall)
 
