@@ -66,6 +66,7 @@ function createApp() {
     app.use('/api/calls', apiLimiter, require('./api/routes/v1/calls.routes'))
     app.use('/api/customers', apiLimiter, require('./api/routes/v1/customers.routes'))
     app.use('/api/dashboard', apiLimiter, require('./api/routes/v1/dashboard.routes'))
+    app.use('/api/models', apiLimiter, require('./api/routes/v1/models.routes'))
 
     // ── SPA fallback ───────────────────────────────────────────────────────
     app.get('*', (req, res, next) => {

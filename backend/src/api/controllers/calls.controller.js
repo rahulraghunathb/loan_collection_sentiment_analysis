@@ -138,7 +138,13 @@ const transcribeCall = asyncHandler(async (req, res) => {
         ? require('path').join(config.UPLOAD_DIR, require('path').basename(call.audioUrl))
         : null
 
-    const segments = await sttService.transcribe(audioPath)
+    let segments
+    try {
+        segments = await sttService.transcribe(audioPath)
+    } catch (err) {
+        log.error('STT transcription error', { callId: call.id, message: err.message })
+        throw new AppError('INTERNAL_ERROR', err.message)
+    }
 
     // Upsert transcript segments
     await db.TranscriptSegment.destroy({ where: { callId: call.id } })
@@ -196,7 +202,13 @@ const analyzeCall = asyncHandler(async (req, res) => {
     log.info('Starting AI analysis', { callId: call.id, segmentCount: call.segments.length, model })
 
     const pipeline = require('../../../ai/pipeline')
-    const result = await pipeline.analyze(call, { model })
+    let result
+    try {
+        result = await pipeline.analyze(call, { model })
+    } catch (err) {
+        log.error('AI pipeline error', { callId: call.id, message: err.message })
+        throw new AppError('ANALYSIS_FAILED', err.message)
+    }
 
     log.info('AI analysis complete', { callId: call.id, riskScore: result.riskScore, outcome: result.outcome, model })
     res.json({ success: true, data: result, meta: { model } })

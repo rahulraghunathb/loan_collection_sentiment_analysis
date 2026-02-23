@@ -32,10 +32,14 @@ const API = {
             const res = await fetch(`${this.BASE}${endpoint}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),
+                body: data !== undefined ? JSON.stringify(data) : undefined,
             })
-            if (!res.ok) throw new Error(`HTTP ${res.status}`)
-            return await res.json()
+            const json = await res.json()
+            if (!res.ok) {
+                const msg = json?.error?.detail || json?.error?.message || json?.message || `HTTP ${res.status}`
+                throw new Error(msg)
+            }
+            return json
         } catch (err) {
             console.error(`API POST ${endpoint}:`, err)
             return { success: false, error: err.message }
