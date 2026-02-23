@@ -1,0 +1,42 @@
+# ── Dependencies ──────────────────────────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+
+# ── Environment & Secrets ──────────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# ── Database ───────────────────────────────────────────────────────────────────
+backend/data/
+*.sqlite
+*.sqlite3
+*.db
+
+# ── Uploaded audio files ───────────────────────────────────────────────────────
+backend/uploads/
+
+# ── Logs ───────────────────────────────────────────────────────────────────────
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ── OS & Editor ────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ── Build output ───────────────────────────────────────────────────────────────
+dist/
+build/
+.cache/

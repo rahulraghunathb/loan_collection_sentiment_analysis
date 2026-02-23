@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CollectIQ — Loan Collection Intelligence</title>
+    <meta
+      name="description"
+      content="AI-powered loan collection conversation intelligence platform for banks and NBFCs."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+  </head>
+  <body>
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-icon">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M12 2L2 7l10 5 10-5-10-5z" />
+            <path d="M2 17l10 5 10-5" />
+            <path d="M2 12l10 5 10-5" />
+          </svg>
+        </div>
+        <span class="brand-name">CollectIQ</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="#dashboard" class="nav-item active" data-page="dashboard">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <rect x="3" y="3" width="7" height="7" rx="1" />
+            <rect x="14" y="3" width="7" height="7" rx="1" />
+            <rect x="3" y="14" width="7" height="7" rx="1" />
+            <rect x="14" y="14" width="7" height="7" rx="1" />
+          </svg>
+          <span>Dashboard</span>
+        </a>
+        <a href="#calls" class="nav-item" data-page="calls">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path
+              d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"
+            />
+          </svg>
+          <span>Calls</span>
+        </a>
+        <a href="#customers" class="nav-item" data-page="customers">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+            <circle cx="9" cy="7" r="4" />
+            <path d="M23 21v-2a4 4 0 00-3-3.87" />
+            <path d="M16 3.13a4 4 0 010 7.75" />
+          </svg>
+          <span>Customers</span>
+        </a>
+        <a href="#compliance" class="nav-item" data-page="compliance">
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+          <span>Compliance</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div id="mode-badge" class="demo-badge">
+          <span class="pulse-dot"></span>
+          <span id="mode-label">Loading…</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main id="main-content" class="main-content">
+      <header class="top-bar">
+        <button
+          id="sidebar-toggle"
+          class="sidebar-toggle"
+          aria-label="Toggle sidebar"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="18" x2="21" y2="18" />
+          </svg>
+        </button>
+        <div class="top-bar-title">
+          <h1 id="page-title">Dashboard</h1>
+          <p id="page-subtitle" class="subtitle">
+            Real-time collection intelligence overview
+          </p>
+        </div>
+        <div class="top-bar-actions">
+          <div class="search-box">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              type="text"
+              id="global-search"
+              placeholder="Search calls, customers..."
+            />
+          </div>
+        </div>
+      </header>
+
+      <div id="page-content" class="page-content">
+        <!-- Dynamic content loaded here -->
+        <div class="loading-skeleton">
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+          <div class="skeleton-card"></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Modal overlay for call details -->
+    <div id="modal-overlay" class="modal-overlay hidden">
+      <div id="modal-content" class="modal-content">
+        <button id="modal-close" class="modal-close">&times;</button>
+        <div id="modal-body"></div>
+      </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/callList.js"></script>
+    <script src="js/callDetail.js"></script>
+    <script src="js/customerTimeline.js"></script>
+    <script src="js/uploadCall.js"></script>
+    <script src="js/app.js"></script>
+  </body>
+</html>

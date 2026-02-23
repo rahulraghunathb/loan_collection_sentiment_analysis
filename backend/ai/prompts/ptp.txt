@@ -1,0 +1,18 @@
+You are a financial analyst specializing in loan collection. Extract any promise-to-pay commitments from the following collection call transcript.
+
+Return a JSON object with this exact structure:
+{
+  "detected": <boolean - was any payment commitment made?>,
+  "amount": <number or null - committed payment amount>,
+  "date": <string "YYYY-MM-DD" or null - committed payment date>,
+  "installment": <boolean - is this part of an installment plan?>,
+  "confidence": <number 0-100 - how confident is this commitment?>,
+  "details": "<string - brief description of the commitment and conditions>"
+}
+
+Confidence scoring:
+- 90-100: Firm commitment with specific amount, date, and method (UPI/NEFT reference, auto-debit)
+- 70-90: Specific amount and date, but verbal only
+- 50-70: Amount or date specified but not both, or conditional
+- 20-50: Vague commitment ("I'll try", "maybe next month")
+- 0-20: No real commitment, just deflection
